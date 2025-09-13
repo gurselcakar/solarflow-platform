@@ -1,10 +1,17 @@
-import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/navbar"
+import { HeroSection } from "@/components/sections/hero-section"
+import { FeaturesSection } from "@/components/sections/features-section"
+import { CTASection } from "@/components/sections/cta-section"
+import { Footer } from "@/components/sections/footer"
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <h1>Hello World</h1>
-      <Button>Click me</Button>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <HeroSection />
+      <FeaturesSection />
+      <CTASection />
+      <Footer />
     </div>
-  );
+  )
 }
