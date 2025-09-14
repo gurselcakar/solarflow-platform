@@ -1,4 +1,5 @@
 import { EnergyDataPoint, TenantContract, TenantTariff } from "@/types/energy"
+import { BuildingSolarData, SolarPanelReading } from "@/types/panel"
 
 export const SAMPLE_TENANT_CONTRACTS: TenantContract[] = [
   {
@@ -183,4 +184,87 @@ function getConsumptionPattern(hour: number, dayOfWeek: number) {
     residential: residentialBase * variance,
     common: commonBase * variance
   }
+}
+
+export function generateSolarPanelData(buildingId: string, buildingName: string, numPanels: number = 12): BuildingSolarData {
+  const panels: SolarPanelReading[] = []
+  let totalCurrentOutput = 0
+  let totalMaxCapacity = 0
+  let activePanels = 0
+
+  const manufacturers = ['SunPower', 'LG Solar', 'REC Solar', 'Q CELLS', 'Canadian Solar']
+  const models = ['Maxeon 3', 'NeON H', 'Alpha Pure', 'Q.PEAK DUO', 'HiKu7']
+
+  for (let i = 1; i <= numPanels; i++) {
+    const manufacturerIndex = Math.floor(Math.random() * manufacturers.length)
+    const manufacturer = manufacturers[manufacturerIndex]
+    const model = models[manufacturerIndex]
+
+    const maxCapacityW = 350 + Math.floor(Math.random() * 100) // 350-450W panels
+
+    const statusRandom = Math.random()
+    let status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' | 'BROKEN'
+    let currentOutputW = 0
+
+    if (statusRandom > 0.95) {
+      status = 'BROKEN'
+    } else if (statusRandom > 0.92) {
+      status = 'MAINTENANCE'
+    } else if (statusRandom > 0.88) {
+      status = 'INACTIVE'
+    } else {
+      status = 'ACTIVE'
+      activePanels++
+
+      // Calculate current output based on time of day and weather
+      const now = new Date()
+      const hour = now.getHours()
+      const solarIrradiance = calculateSolarIrradiance(hour, Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000))
+
+      // Add panel-specific variance (efficiency, shading, etc.)
+      const panelEfficiency = 0.85 + Math.random() * 0.15 // 85-100% efficiency
+      currentOutputW = Math.round(maxCapacityW * solarIrradiance * panelEfficiency)
+    }
+
+    const installDate = new Date(2022, Math.floor(Math.random() * 3), Math.floor(Math.random() * 28) + 1)
+    const temperature = status === 'ACTIVE' ? Math.round(25 + Math.random() * 25) : undefined // 25-50°C when active
+
+    panels.push({
+      id: `panel_${buildingId}_${i.toString().padStart(2, '0')}`,
+      panelId: `Panel-${i.toString().padStart(2, '0')}`,
+      buildingId,
+      manufacturer,
+      model,
+      maxCapacityW,
+      currentOutputW,
+      status,
+      installDate: installDate.toISOString(),
+      lastMaintenance: status === 'MAINTENANCE' ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString() : undefined,
+      temperature,
+      efficiency: status === 'ACTIVE' ? Math.round((currentOutputW / maxCapacityW) * 100) : undefined,
+      totalEnergyGenerated: Math.round((maxCapacityW * 0.7 * (Date.now() - installDate.getTime()) / (365 * 24 * 60 * 60 * 1000)) * 1000), // Rough annual generation estimate
+      timestamp: new Date().toISOString()
+    })
+
+    totalCurrentOutput += currentOutputW
+    totalMaxCapacity += maxCapacityW
+  }
+
+  return {
+    buildingId,
+    buildingName,
+    totalPanels: numPanels,
+    activePanels,
+    totalCapacityW: totalMaxCapacity,
+    currentOutputW: totalCurrentOutput,
+    panels
+  }
+}
+
+export function generateMultipleBuildingSolarData(): BuildingSolarData[] {
+  return [
+    generateSolarPanelData('building_1', 'Sonnenhof Apartments', 12),
+    generateSolarPanelData('building_2', 'Green Energy Complex', 16),
+    generateSolarPanelData('building_3', 'Solar View Residences', 8)
+  ]
 }

@@ -5,23 +5,37 @@ import { FinancialOverview } from "@/components/dashboard/financial-overview"
 import { EnergyFlowChart } from "@/components/dashboard/energy-flow-chart"
 import { TenantAnalyticsGrid } from "@/components/dashboard/tenant-analytics-grid"
 import { TimeSeriesCharts } from "@/components/dashboard/time-series-charts"
-import { generateRealisticEnergyData, SAMPLE_TENANT_CONTRACTS } from "@/lib/sample-data"
+import { SolarPanelMonitor } from "@/components/dashboard/solar-panel-monitor"
+import { generateRealisticEnergyData, SAMPLE_TENANT_CONTRACTS, generateMultipleBuildingSolarData } from "@/lib/sample-data"
 import { EnergyDataPoint } from "@/types/energy"
+import { BuildingSolarData } from "@/types/panel"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BarChart3, Sun } from "lucide-react"
 
 export default function EnergyDashboard() {
   const [energyData, setEnergyData] = useState<EnergyDataPoint[]>([])
   const [currentDataPoint, setCurrentDataPoint] = useState<EnergyDataPoint | null>(null)
+  const [solarPanelData, setSolarPanelData] = useState<BuildingSolarData[]>([])
+  const [selectedTab, setSelectedTab] = useState('overview')
 
   useEffect(() => {
     const sampleData = generateRealisticEnergyData(new Date('2025-08-04T14:00:00'), 15, 48)
     setEnergyData(sampleData)
     setCurrentDataPoint(sampleData[sampleData.length - 1] || null)
 
+    // Initialize solar panel data
+    const initialPanelData = generateMultipleBuildingSolarData()
+    setSolarPanelData(initialPanelData)
+
     const interval = setInterval(() => {
       const now = new Date()
       const newDataPoint = generateRealisticEnergyData(now, 15, 1)[0]
       setEnergyData(prev => [...prev.slice(-47), newDataPoint])
       setCurrentDataPoint(newDataPoint)
+
+      // Update solar panel data with new readings
+      const updatedPanelData = generateMultipleBuildingSolarData()
+      setSolarPanelData(updatedPanelData)
     }, 5000) // Update every 5 seconds for demo
 
     return () => clearInterval(interval)
@@ -58,26 +72,49 @@ export default function EnergyDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-8">
-      <FinancialOverview
-        financialData={currentDataPoint.financial}
-        metrics={aggregatedMetrics}
-      />
+    <div className="p-6">
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Energy Overview
+          </TabsTrigger>
+          <TabsTrigger value="panels" className="flex items-center gap-2">
+            <Sun className="h-4 w-4" />
+            Solar Panels
+          </TabsTrigger>
+        </TabsList>
 
-      <EnergyFlowChart
-        buildingData={currentDataPoint.building}
-        timestamp={currentDataPoint.timestamp}
-      />
+        <TabsContent value="overview" className="space-y-8">
+          <FinancialOverview
+            financialData={currentDataPoint.financial}
+            metrics={aggregatedMetrics}
+          />
 
-      <TenantAnalyticsGrid
-        tenantData={currentDataPoint.tenants}
-        tenantNames={tenantNames}
-      />
+          <EnergyFlowChart
+            buildingData={currentDataPoint.building}
+            timestamp={currentDataPoint.timestamp}
+          />
 
-      <TimeSeriesCharts
-        data={energyData}
-        onTimeRangeChange={(range) => console.log('Time range changed:', range)}
-      />
+          <TenantAnalyticsGrid
+            tenantData={currentDataPoint.tenants}
+            tenantNames={tenantNames}
+          />
+
+          <TimeSeriesCharts
+            data={energyData}
+            onTimeRangeChange={(range) => console.log('Time range changed:', range)}
+          />
+        </TabsContent>
+
+        <TabsContent value="panels" className="space-y-6">
+          <SolarPanelMonitor
+            buildingData={solarPanelData}
+            selectedBuildingId="building_1"
+            onBuildingChange={(buildingId) => console.log('Building changed:', buildingId)}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

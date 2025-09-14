@@ -87,6 +87,7 @@ model Building {
   // Relations
   landlord    User        @relation("LandlordBuildings", fields: [landlordId], references: [id])
   apartments  Apartment[]
+  solarPanels SolarPanel[]
 
   @@map("buildings")
 }
@@ -105,4 +106,30 @@ model Apartment {
   tenant         User?    @relation("TenantApartment", fields: [tenantId], references: [id])
 
   @@map("apartments")
+}
+
+enum PanelStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  BROKEN
+}
+
+model SolarPanel {
+  id             String      @id @default(cuid())
+  panelId        String      @unique @map("panel_id") // e.g., "Panel-01", "Panel-02"
+  buildingId     String      @map("building_id")
+  manufacturer   String
+  model          String
+  maxCapacityW   Int         @map("max_capacity_w") // Maximum capacity in watts
+  installDate    DateTime    @map("install_date")
+  status         PanelStatus @default(ACTIVE)
+  lastMaintenance DateTime?  @map("last_maintenance")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  building       Building    @relation(fields: [buildingId], references: [id])
+
+  @@map("solar_panels")
 }
