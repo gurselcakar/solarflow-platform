@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  LANDLORD
+  TENANT
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  role          Role      @default(TENANT)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // NextAuth relations
+  accounts      Account[]
+  sessions      Session[]
+
+  // App relations
+  ownedBuildings Building[] @relation("LandlordBuildings")
+  tenantApartment Apartment? @relation("TenantApartment")
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model Building {
+  id          String      @id @default(cuid())
+  name        String
+  address     String
+  landlordId  String      @map("landlord_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  landlord    User        @relation("LandlordBuildings", fields: [landlordId], references: [id])
+  apartments  Apartment[]
+
+  @@map("buildings")
+}
+
+model Apartment {
+  id             String   @id @default(cuid())
+  apartmentNumber String  @map("apartment_number")
+  buildingId     String   @map("building_id")
+  tenantId       String?  @unique @map("tenant_id")
+  meterColumn    String   @map("meter_column") // Links to CSV columns: "we1_consumption_kWh" or "we2_consumption_kWh"
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  building       Building @relation(fields: [buildingId], references: [id])
+  tenant         User?    @relation("TenantApartment", fields: [tenantId], references: [id])
+
+  @@map("apartments")
+}
