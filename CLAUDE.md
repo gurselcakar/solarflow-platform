@@ -75,4 +75,3 @@ web/
 ## Additional Resources
 - `docs/hackathonInfo/` - Hackathon datasets and requirements
 - Smart meter data available in CSV format for testing
-- whenever we program, it happens inside of the web folder

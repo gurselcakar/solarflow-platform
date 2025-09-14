@@ -48,15 +48,21 @@ export function Navbar() {
           >
             Contact
           </Link>
+          <Link
+            href="/dashboard/energy"
+            className="text-sm font-medium text-primary transition-colors hover:text-blue-600"
+          >
+            Energy Dashboard
+          </Link>
         </div>
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-4">
-          <Button variant="ghost" size="sm">
-            Login
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/auth/signin">Login</Link>
           </Button>
-          <Button size="sm" className="bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700">
-            Get Started
+          <Button size="sm" className="bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700" asChild>
+            <Link href="/auth/signin">Get Started</Link>
           </Button>
           <ModeToggle />
         </div>
@@ -112,11 +118,11 @@ export function Navbar() {
               Contact
             </Link>
             <div className="flex space-x-2 pt-2 border-t">
-              <Button variant="ghost" size="sm" className="flex-1">
-                Login
+              <Button variant="ghost" size="sm" className="flex-1" asChild>
+                <Link href="/auth/signin">Login</Link>
               </Button>
-              <Button size="sm" className="flex-1 bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700">
-                Get Started
+              <Button size="sm" className="flex-1 bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700" asChild>
+                <Link href="/auth/signin">Get Started</Link>
               </Button>
             </div>
           </div>
